@@ -263,16 +263,22 @@ class BinHeapEnv(gym.Env):
     # @profile
     def find_target_distribution_2d(self):
 
-        # Generate meshgrid for translations to apply
-        num_steps = 51
-        x = np.linspace(-200, 200, num=num_steps, dtype=np.int)
-        grid = np.meshgrid(x, x)
-        grid = np.array([grid[0].flatten(), grid[1].flatten()])
-
+        # Render target object and full depth image to get offset and centroid
         full_depth, target_depth, target_mask, plane_depth = self.render_target_modal_mask()
         nonzero_target_inds = np.stack(np.where(target_depth - plane_depth < 0))
         target_centroid = np.mean(nonzero_target_inds, axis=1)[:,None]
         nonzero_target_depth_offset = plane_depth[nonzero_target_inds[0], nonzero_target_inds[1]] - target_depth[nonzero_target_inds[0], nonzero_target_inds[1]] 
+        
+        # Generate meshgrid for translations to apply
+        num_x_steps = 51
+        num_y_steps = 38
+        x = np.linspace(0, self.camera.width-1, num=num_x_steps, dtype=np.int)
+        y = np.linspace(0, self.camera.height-1, num=num_y_steps, dtype=np.int)
+        grid = np.meshgrid(y, x)
+        grid = np.array([grid[0].flatten(), grid[1].flatten()])
+        grid -= target_centroid.astype(np.int)
+
+        # Shift target depth and add offset to create new depth images
         shifted_target_inds = np.repeat(nonzero_target_inds[None,...], grid.shape[1], axis=0) + grid[None,...].T
         shifted_target_inds[:,0,:][shifted_target_inds[:,0,:] >= self.camera.height] = self.camera.height - 1
         shifted_target_inds[:,1,:][shifted_target_inds[:,1,:] >= self.camera.width] = self.camera.width - 1
@@ -280,12 +286,10 @@ class BinHeapEnv(gym.Env):
         shifted_target_ims = np.zeros((grid.shape[1], target_depth.shape[0], target_depth.shape[1]))
         shifted_target_ims[shifted_target_inds[0], shifted_target_inds[1], shifted_target_inds[2]] = plane_depth[shifted_target_inds[1], shifted_target_inds[2]] - np.tile(nonzero_target_depth_offset, grid.shape[1])
 
-        # import time
-        # start = time.time()
         modal_masks = np.logical_and(shifted_target_ims < full_depth, shifted_target_ims > 0)
         mask_ious = np.sum(np.logical_and(modal_masks, target_mask), axis=(1,2)) / np.sum(np.logical_or(modal_masks, target_mask), axis=(1,2))
         mask_ious[np.sum(target_mask) == 0 and np.sum(modal_masks, axis=(1,2)) == 0] = 1.0
-        # print(time.time()-start)
+
         # for i,iou in enumerate(mask_ious):
         #     if iou > 0.9 and np.sum(target_mask) == 0:
         #         print('AND: {}, OR: {}'.format(np.sum(np.logical_and(modal_masks[i], target_mask)), np.sum(np.logical_or(modal_masks[i], target_mask))))
@@ -308,6 +312,7 @@ class BinHeapEnv(gym.Env):
         iou_centers = (target_centroid + grid[:, np.where(mask_ious > 0.9)[0]]).astype(np.int)
         iou_centers[0,:][iou_centers[0,:] >= self.camera.height] = self.camera.height - 1
         iou_centers[1,:][iou_centers[1,:] >= self.camera.width] = self.camera.width - 1
+        iou_centers = np.concatenate((iou_centers, target_centroid.astype(np.int)), axis=1)
 
         return iou_centers
 
