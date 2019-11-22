@@ -320,7 +320,7 @@ class BinHeapEnv(gym.Env):
         dist_im = skm.binary_dilation(dist_im, selem=np.ones((11,11))).astype(np.uint8)
 
         soft_dist_im = np.sum(shifted_target_ims[mask_ious > 0.9,...] > 0, axis=0) + (plane_depth-target_depth > 0).astype(np.uint8)
-        soft_dist_im = soft_dist_im / np.max(soft_dist_im)
+        soft_dist_im = (np.iinfo(np.uint8).max * soft_dist_im / np.max(soft_dist_im)).astype(np.uint8)
 
         return dist_im, soft_dist_im
 

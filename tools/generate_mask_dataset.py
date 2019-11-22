@@ -488,7 +488,7 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
                     if image_config['dist']:
                         BinaryImage(dist_im).save(os.path.join(dist_dir, 'image_{:06d}.png'.format(num_images_per_state*state_id + k)))
                     if image_config['soft_dist']:
-                        DepthImage(soft_dist_im).save(os.path.join(soft_dist_dir, 'image_{:06d}.png'.format(num_images_per_state*state_id + k)))
+                        GrayscaleImage(soft_dist_im).save(os.path.join(soft_dist_dir, 'image_{:06d}.png'.format(num_images_per_state*state_id + k)))
                     if image_config['modal']:
                         modal_id_dir = os.path.join(modal_dir, 'image_{:06d}'.format(num_images_per_state*state_id + k))
                         if not os.path.exists(modal_id_dir):
