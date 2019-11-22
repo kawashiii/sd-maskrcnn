@@ -108,6 +108,9 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
     dist_dir = os.path.join(image_dir, 'dist_ims')
     if image_config['dist'] and not os.path.exists(dist_dir):
         os.mkdir(dist_dir)
+    soft_dist_dir = os.path.join(image_dir, 'soft_dist_ims')
+    if image_config['soft_dist'] and not os.path.exists(soft_dist_dir):
+        os.mkdir(soft_dist_dir)
     amodal_dir = os.path.join(image_dir, 'amodal_masks')
     if image_config['amodal'] and not os.path.exists(amodal_dir):
         os.mkdir(amodal_dir)
@@ -163,6 +166,14 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
         if image_config['dist']:
             image_tensor_config['fields']['dist_im'] = {
                 'dtype': 'uint8',
+                'channels': 1,
+                'height': im_height,
+                'width': im_width
+            }
+        
+        if image_config['soft_dist']:
+            image_tensor_config['fields']['soft_dist_im'] = {
+                'dtype': 'float32',
                 'channels': 1,
                 'height': im_height,
                 'width': im_width
@@ -278,6 +289,8 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
                 os.remove(os.path.join(color_dir, im_name))
             if os.path.exists(os.path.join(dist_dir, im_name)):
                 os.remove(os.path.join(dist_dir, im_name))
+            if os.path.exists(os.path.join(soft_dist_dir, im_name)):
+                os.remove(os.path.join(soft_dist_dir, im_name))
             if os.path.exists(os.path.join(semantic_dir, im_name)):
                 os.remove(os.path.join(semantic_dir, im_name))
             if os.path.exists(os.path.join(modal_dir, im_basename)):
@@ -388,9 +401,7 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
                     else:
                         depth_obs = obs
                     
-                    centers = env.find_target_distribution_2d()
-                    dist_im = np.zeros_like(depth_obs, dtype=np.uint8)
-                    dist_im[centers[0,:], centers[1,:]] = np.iinfo(np.uint8).max
+                    dist_im, soft_dist_im = env.find_target_distribution_2d()
                     
                     # vis obs
                     if vis_config['obs']:
@@ -405,6 +416,10 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
                         if image_config['dist']:
                             plt.figure()
                             plt.imshow(dist_im)
+                            plt.show()
+                        if image_config['soft_dist']:
+                            plt.figure()
+                            plt.imshow(soft_dist_im)
                             plt.show()
 
                     if image_config['modal'] or image_config['amodal'] or image_config['semantic']:
@@ -448,6 +463,8 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
                             image_datapoint['depth_im'] = depth_obs[:,:,None]
                         if image_config['dist']:
                             image_datapoint['dist_im'] = dist_im
+                        if image_config['soft_dist']:
+                            image_datapoint['soft_dist_im'] = soft_dist_im
                         if image_config['modal']:
                             image_datapoint['modal_segmasks'] = modal_segmask_arr
                         if image_config['amodal']:
@@ -470,6 +487,8 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
                         DepthImage(depth_obs).save(os.path.join(depth_dir, 'image_{:06d}.png'.format(num_images_per_state*state_id + k)))
                     if image_config['dist']:
                         BinaryImage(dist_im).save(os.path.join(dist_dir, 'image_{:06d}.png'.format(num_images_per_state*state_id + k)))
+                    if image_config['soft_dist']:
+                        DepthImage(soft_dist_im).save(os.path.join(soft_dist_dir, 'image_{:06d}.png'.format(num_images_per_state*state_id + k)))
                     if image_config['modal']:
                         modal_id_dir = os.path.join(modal_dir, 'image_{:06d}'.format(num_images_per_state*state_id + k))
                         if not os.path.exists(modal_id_dir):

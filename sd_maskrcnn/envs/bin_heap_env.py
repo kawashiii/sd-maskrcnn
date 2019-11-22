@@ -24,6 +24,7 @@ Author: Mike Danielczuk
 import numpy as np
 import gym
 import trimesh
+import skimage.morphology as skm
 
 from autolab_core import Logger
 from pyrender import (Scene, IntrinsicsCamera, Mesh, DirectionalLight, Viewer,
@@ -314,7 +315,14 @@ class BinHeapEnv(gym.Env):
         iou_centers[1,:][iou_centers[1,:] >= self.camera.width] = self.camera.width - 1
         iou_centers = np.concatenate((iou_centers, target_centroid.astype(np.int)), axis=1)
 
-        return iou_centers
+        dist_im = np.zeros_like(full_depth, dtype=np.bool)
+        dist_im[iou_centers[0,:], iou_centers[1,:]] = True
+        dist_im = skm.binary_dilation(dist_im, selem=np.ones((11,11))).astype(np.uint8)
+
+        soft_dist_im = np.sum(shifted_target_ims[mask_ious > 0.9,...] > 0, axis=0) + (plane_depth-target_depth > 0).astype(np.uint8)
+        soft_dist_im = soft_dist_im / np.max(soft_dist_im)
+
+        return dist_im, soft_dist_im
 
     def _generate_rotation_matrices(self, step=np.pi/32):
         angles = np.arange(step, 2*np.pi, step)

@@ -13,6 +13,7 @@ images:
   color: 1
   depth: 1
   dist: 1
+  soft_dist: 1
   modal: 0
   amodal: 0
   semantic: 0
