@@ -19,8 +19,7 @@ RUN jupyter notebook --generate-config && \
 
 RUN cd /root/src && \
     git clone -b lab_config https://github.com/kawashiii/sd-maskrcnn && \
-    bash install.sh && \
-    cd sd-maskrcnn && \
+    cd sd-maskrcnn && bash install.sh && \
     wget -q https://berkeley.box.com/shared/static/7aurloy043f1py5nukxo9vop3yn7d7l3.rar && \
     unrar x 7aurloy043f1py5nukxo9vop3yn7d7l3.rar datasets/wisdom/ && \
     rm 7aurloy043f1py5nukxo9vop3yn7d7l3.rar
