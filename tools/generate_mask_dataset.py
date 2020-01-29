@@ -36,8 +36,12 @@ from autolab_core import TensorDataset, YamlConfig, Logger
 import autolab_core.utils as utils
 from perception import DepthImage, GrayscaleImage, BinaryImage
 
-from sd_maskrcnn.envs import BinHeapEnv
-from sd_maskrcnn.envs.constants import *
+# from sd_maskrcnn.envs import BinHeapEnv
+# from sd_maskrcnn.envs.constants import *
+import sys
+sys.path.append('/home/kawashi/src/sd-maskrcnn/sd_maskrcnn')
+from envs.bin_heap_env import *
+from envs.constants import *
 
 SEED = 744
 
@@ -65,8 +69,8 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
 
     # debugging
     debug = config['debug']
-    if debug:
-        np.random.seed(SEED)
+    # if debug:
+    #     np.random.seed(SEED)
     
     # read general parameters
     num_states = config['num_states']
@@ -113,6 +117,7 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
     num_prev_states = 0
 
     # set dataset params
+    # default is False
     if save_tensors:
 
         # read dataset subconfigs
@@ -144,6 +149,7 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
         state_dataset_path = os.path.join(output_dataset_path, 'state_tensors')
         image_dataset_path = os.path.join(output_dataset_path, 'image_tensors')
 
+        # default is False
         if warm_start:
             
             if not os.path.exists(state_dataset_path) or not os.path.exists(image_dataset_path):
@@ -186,7 +192,8 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
         # read templates
         state_datapoint = state_dataset.datapoint_template
         image_datapoint = image_dataset.datapoint_template
-    
+
+    # default is False    
     if warm_start:
 
         if not os.path.exists(os.path.join(output_dataset_path, 'metadata.json')):
@@ -277,6 +284,7 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
                 # reset env
                 env.reset()
                 state = env.state
+                print(state.obj_keys)
                 split = state.metadata['split']
                 
                 # render state
@@ -328,7 +336,7 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
                     # vis obs
                     if vis_config['obs']:
                         plt.figure()
-                        plt.imshow(env.observation)
+                        plt.imshow(env.observation, cmap="gray")
                         plt.title('Observation')
                         plt.show()
 

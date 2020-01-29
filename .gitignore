@@ -10,3 +10,6 @@ dist
 datasets/
 models/
 .ipynb_checkpoints/
+test/
+new_dataset/
+pyopengl/
