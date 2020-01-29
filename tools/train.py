@@ -82,20 +82,22 @@ def train(config):
 
     # Load weights
     exclude_layers = []
+    weights_path = "./models/sd_maskrcnn.h5"
+    model.load_weights(weights_path, by_name=True)
     print("Loading weights ", weights_path)
-    if config['model']['weights'].lower() == "coco":
-        # Exclude the last layers because they require a matching
-        # number of classes
-        if config['model']['settings']['image_channel_count'] == 1:
-            exclude_layers = ['conv1']
-        exclude_layers += ["mrcnn_class_logits", "mrcnn_bbox_fc", "mrcnn_bbox", "mrcnn_mask"]
-        model.load_weights(weights_path, by_name=True, exclude=exclude_layers)
-    elif config['model']['weights'].lower() == "imagenet":
-        if config['model']['settings']['image_channel_count'] == 1:
-            exclude_layers = ['conv1']
-        model.load_weights(weights_path, by_name=True, exclude=exclude_layers)
-    elif config['model']['weights'].lower() != "new":
-        model.load_weights(weights_path, by_name=True)
+    # if config['model']['weights'].lower() == "coco":
+    #     # Exclude the last layers because they require a matching
+    #     # number of classes
+    #     if config['model']['settings']['image_channel_count'] == 1:
+    #         exclude_layers = ['conv1']
+    #     exclude_layers += ["mrcnn_class_logits", "mrcnn_bbox_fc", "mrcnn_bbox", "mrcnn_mask"]
+    #     model.load_weights(weights_path, by_name=True, exclude=exclude_layers)
+    # elif config['model']['weights'].lower() == "imagenet":
+    #     if config['model']['settings']['image_channel_count'] == 1:
+    #         exclude_layers = ['conv1']
+    #     model.load_weights(weights_path, by_name=True, exclude=exclude_layers)
+    # elif config['model']['weights'].lower() != "new":
+    #     model.load_weights(weights_path, by_name=True)
 
     # save config in run folder
     config.save(os.path.join(config['model']['path'], config['save_conf_name']))

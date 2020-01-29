@@ -1,7 +1,7 @@
 model:
   path: models/
-  weights: new     # new, last, coco, imagenet or custom path
-  epochs: 20       # number of epochs to train for
+  weights: new    # new, last, coco, imagenet or custom path
+  epochs: 30       # number of epochs to train for
   settings:
     name: my_model
     image_shape: [512,512]
@@ -9,16 +9,18 @@ model:
     mean_pixel: [128, 128, 128]
     backbone: resnet35
     max_gt_instances: 20
-    gpu_count: 1
-    images_per_gpu: 5
+    gpu_count: 1 
+    images_per_gpu: 2
     learning_rate: 0.01
 
 dataset:
-  path: datasets/wisdom/wisdom-sim/
+  #  path: datasets/wisdom/wisdom-sim/
+  path: new_dataset/images
   train_indices: train_indices.npy
   val_indices: test_indices.npy
   images: depth_ims
-  masks: modal_segmasks
+  #  masks: modal_segmasks
+  masks: semantic_masks
 
 # name of the config file to save (within the dataset folder)
 # note that this will be overwritten between multiple runs so
