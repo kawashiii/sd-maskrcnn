@@ -9,3 +9,8 @@ build
 dist
 *_results
 datasets/
+models/
+.ipynb_checkpoints/
+test/
+new_dataset/
+pyopengl/

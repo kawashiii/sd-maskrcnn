@@ -1,4 +1,6 @@
 # Segmenting Unknown 3D Objects from Real<br/> Depth Images using Mask R-CNN Trained<br/> on Synthetic Data
+This branch is for laboratory
+
 Michael Danielczuk, Matthew Matl, Saurabh Gupta, Andrew Lee, Andrew Li, Jeffrey Mahler, and Ken Goldberg. https://arxiv.org/abs/1809.05825. [Project Page](https://sites.google.com/view/wisdom-dataset/home)
 
 <p align="center">
@@ -19,6 +21,15 @@ To train a new model, first download the [WISDOM-Sim](https://berkeley.box.com/s
 Note: If you wish to train using single channel images (such as those in WISDOM-Sim), you can change the image_channel_count and mean_pixel parameters to 1 and the single channel mean pixel value, respectively. This option also works when loading pre-trained weights (such as COCO or Imagenet).
 
 ## Generate a New Dataset
+```
+## EGL, which allows for GPU-accelerated rendering without a display manager
+$ PYOPENGL_PLATFORM=egl python tools/generate_mask_dataset.py new_dataset
+
+## If you want to see the simulation, edit "cfg/generate_mask_dataset.yaml" and set "1" to "debug" value.
+## Then run code without PYOPENGL_PLATFORM option
+$ python tools/generate_mask_dataset.py new_dataset
+```
+
 An example for getting started with dataset generation can be found in this [Dataset Generation Google CoLab Notebook](https://colab.research.google.com/drive/1iafphvk6oRT_RF0_fD6XwbHw8tpHqZeu). To generate a new dataset for training, use the `tools/generate_mask_dataset.py` script. Edit the corresponding config files (`cfg/generate_mask_dataset.yaml, cfg/partials/states.yaml, cfg/partials/mask_dataset.yaml`) to fit your needs (specifically, at minimum, you must configure `cfg/partials/states.yaml` to point at your directory of object meshes). The `--save_tensors` command line argument allows for saving the state of each heap generated, and the `--warm_start` option allows for resuming dataset generation if it is stopped. By default, the script outputs a dataset of images to the directory specified on the command line with the following structure:
 ```
 <dataset root directory>/

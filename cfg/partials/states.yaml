@@ -8,12 +8,14 @@ state_space:
       max:              # x,y,z
         - 0.2
         - 0.25
-        - 0.3
+        - 0.4
 
       objects:          # static workspace objects
         bin:
-          mesh_filename: data/bin/bin.obj
-          pose_filename: data/bin/bin_pose.tf
+          # mesh_filename: data/bin/bin.obj
+          mesh_filename: data/dfk_bin/bin.obj
+          # pose_filename: data/bin/bin_pose.tf
+          pose_filename: data/dfk_bin/bin_pose.tf
 
         plane:
           mesh_filename: data/plane/plane.obj
@@ -27,12 +29,12 @@ state_space:
         - 0.1
         - 0.1
 
-    mean_objs: 5        # Poisson dist mean for number of objects in each heap
+    mean_objs: 10        # Poisson dist mean for number of objects in each heap
     min_objs: 2         # Min objs in each heap
-    max_objs: 10        # Max objs in each heap
+    max_objs: 15        # Max objs in each heap
     replace: 0          # Sample objects with replacement?
     max_obj_diam: 0.3   # Max diameter of object to be dropped (otherwise it will be skipped)
-    drop_height: 0.2
+    drop_height: 0.5
     
     # Dynamic sim parameters
     max_settle_steps: 500
@@ -44,7 +46,8 @@ state_space:
       num_objects: 50                       # Number of objects in dataset (test and train)
       train_pct: 0.8                        # Percentage of objects to be designated as train
       object_keys:                          # Folders containing meshes
-        ycb: all                            # all -> all meshes in folder. Can also specify list of mesh names
+        dfk_box: all
+        # ycb: all                            # all -> all meshes in folder. Can also specify list of mesh names
 
       planar_translation:                   # Amount of translation around the center point to drop each object
         min:                                # Uniform random variable
@@ -74,21 +77,33 @@ state_space:
       max: 2.5
 
     x:                                      # Variation in x position and y position
-      min: -0.05                            # Sampled uniformly over the given range
-      max: 0.05
+      # min: -0.05                            # Sampled uniformly over the given range
+      min: -0.01
+      # max: 0.05
+      max: 0.01
     y:
-      min: -0.05
-      max: 0.05
+      # min: -0.05
+      min: -0.01
+      # max: 0.05
+      max: 0.01
 
-    radius:                                 # Uniform random variable for camera distance
-      min: 0.7
-      max: 0.9
-    elevation:                              # Uniform random variable for camera elevation
-      min: 0.01
-      max: 10
-    azimuth:                                # Uniform random variable for camera azimuth
-      min: 0
-      max: 360
-    roll:                                   # Uniform random variable for camera roll
+    radius:                                 # Uniform random variable for camera distance (Distance from camera to world origin.)
+      # min: 0.7
+      min: 0.9
+      # max: 0.9
+      max: 1.1
+    elevation:                              # Uniform random variable for camera elevation (angle from z-axis of camera in degrees.)
+      # min: 0.01
       min: -10
+      # max: 10
       max: 10
+    azimuth:                                # Uniform random variable for camera azimuth (angle from x-axis of camera in degrees.)
+      # min: 0
+      min: -10
+      # max: 360
+      max: 10
+    roll:                                   # Uniform random variable for camera roll
+      # min: -10
+      min: -5
+      # max: 10
+      max: 5
