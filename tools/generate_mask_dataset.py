@@ -36,12 +36,10 @@ from autolab_core import TensorDataset, YamlConfig, Logger
 import autolab_core.utils as utils
 from perception import DepthImage, GrayscaleImage, BinaryImage, ColorImage
 
-# from sd_maskrcnn.envs import BinHeapEnv
-# from sd_maskrcnn.envs.constants import *
 import sys
-sys.path.append('/home/kawashi/src/sd-maskrcnn/sd_maskrcnn')
-from envs.bin_heap_env import *
-from envs.constants import *
+sys.path.append('./')
+from sd_maskrcnn.envs import BinHeapEnv
+from sd_maskrcnn.envs.constants import *
 
 SEED = 744
 
@@ -70,8 +68,8 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
 
     # debugging
     debug = config['debug']
-    # if debug:
-    #     np.random.seed(SEED)
+    if debug:
+        np.random.seed(SEED)
     
     # read general parameters
     num_states = config['num_states']
