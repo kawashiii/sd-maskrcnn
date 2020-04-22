@@ -97,6 +97,8 @@ class HeapStateSpace(gym.Space):
         delta_com_sigma = max(1e-6, obj_config['center_of_mass']['sigma'])
         self.delta_com_rv = sstats.multivariate_normal(np.zeros(3), delta_com_sigma**2)
 
+        self.obj_scale = obj_config['scale']
+        self.obj_has_texture = obj_config['texture']
         self.obj_density = obj_config['density']
         
         # bounds of workspace (for checking out of bounds)
@@ -245,8 +247,14 @@ class HeapStateSpace(gym.Space):
         while total_drops < total_num_objs and len(objs_in_heap) < num_objs:
             obj_key = sample_keys[obj_inds[total_drops]]
             obj_mesh = trimesh.load_mesh(self.mesh_filenames[obj_key])
-            obj_mesh.visual = trimesh.visual.ColorVisuals(obj_mesh, vertex_colors=(0.7,0.7,0.7,1.0))
+            if not self.obj_has_texture:
+                obj_mesh.visual = trimesh.visual.ColorVisuals(obj_mesh, vertex_colors=(0.7,0.7,0.7,1.0))
+            
+            if self.obj_scale == "millimeters":
+                obj_mesh.convert_units("meters", True)
+            
             obj_mesh.density = self.obj_density
+
             obj = ObjectState(obj_key, obj_mesh)
             _, radius = trimesh.nsphere.minimum_nsphere(obj.mesh)
             if 2*radius > self.max_obj_diam:

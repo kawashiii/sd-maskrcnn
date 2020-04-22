@@ -12,10 +12,8 @@ state_space:
 
       objects:          # static workspace objects
         bin:
-          # mesh_filename: data/bin/bin.obj
-          mesh_filename: data/dfk_bin/bin.obj
-          # pose_filename: data/bin/bin_pose.tf
-          pose_filename: data/dfk_bin/bin_pose.tf
+          mesh_filename: data/lab_bin/bin.obj
+          pose_filename: data/lab_bin/bin_pose.tf
 
         plane:
           mesh_filename: data/plane/plane.obj
@@ -45,8 +43,10 @@ state_space:
       mesh_dir: datasets/objects/meshes/    # Directory containing meshes to be dropped
       num_objects: 50                       # Number of objects in dataset (test and train)
       train_pct: 0.8                        # Percentage of objects to be designated as train
+      scale: millimeters                    # 'millimeters' or 'meters'
+      texture: 1                            # 1: has texture, 0: no texture
       object_keys:                          # Folders containing meshes
-        dfk_box: all
+        lab_obj: all
         # ycb: all                            # all -> all meshes in folder. Can also specify list of mesh names
 
       planar_translation:                   # Amount of translation around the center point to drop each object

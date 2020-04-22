@@ -25,7 +25,7 @@ import numpy as np
 import gym
 
 from autolab_core import Logger
-from pyrender import (Scene, IntrinsicsCamera, Mesh, DirectionalLight, Viewer,
+from pyrender import (Scene, IntrinsicsCamera, Mesh, DirectionalLight, Viewer, Texture,
                       MetallicRoughnessMaterial, Node, OffscreenRenderer, RenderFlags)
 
 from .physics_engine import PybulletPhysicsEngine
@@ -141,10 +141,20 @@ class BinHeapEnv(gym.Env):
             T_obj_world = obj_state.pose.matrix
             scene.add(obj_mesh, pose=T_obj_world, name=obj_key)
 
+        mesh_dir = self.config['state_space']['heap']['objects']['mesh_dir']
+        has_texture = self.config['state_space']['heap']['objects']['texture']
         # add scene objects
         for obj_key in self.state.obj_keys:
             obj_state = self.state[obj_key]
             obj_mesh = Mesh.from_trimesh(obj_state.mesh, material=material)
+            if has_texture:
+                import cv2
+                key, item = obj_key.split('~')
+                texture_filename = item.split('_')[0] + ".jpg"
+                texture =  cv2.cvtColor(cv2.imread(mesh_dir + key + '/' + texture_filename), cv2.COLOR_BGR2RGB)
+                texture = Texture(source=texture, source_channels='RGB')
+                material = MetallicRoughnessMaterial(baseColorTexture=texture, wireframe=True)
+                obj_mesh = Mesh.from_trimesh(obj_state.mesh, material=material)
             T_obj_world = obj_state.pose.matrix
             scene.add(obj_mesh, pose=T_obj_world, name=obj_key)
 
