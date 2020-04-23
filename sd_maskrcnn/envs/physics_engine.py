@@ -31,7 +31,7 @@ import shutil
 import pkg_resources
 
 from autolab_core import RigidTransform, Logger
-from pyrender import Scene, Viewer, Mesh, Node, PerspectiveCamera
+from pyrender import Scene, Viewer, Mesh, Node, PerspectiveCamera, Texture, MetallicRoughnessMaterial
 
 from .constants import GRAVITY_ACCEL
 
@@ -75,7 +75,7 @@ class PybulletPhysicsEngine(PhysicsEngine):
                     os.path.join(self._urdf_cache_dir, 'plane', 'plane_convex_piece_0.obj'))
 
 
-    def add(self, obj, static=False):
+    def add(self, obj, static=False, texture_filename=None):
 
         # create URDF
         urdf_filename = os.path.join(self._urdf_cache_dir, obj.key, '{}.urdf'.format(obj.key))
@@ -106,8 +106,20 @@ class PybulletPhysicsEngine(PhysicsEngine):
         except:
             raise Exception('Failed to load %s' %(urdf_filename))
         
+        material = MetallicRoughnessMaterial(
+            baseColorFactor=np.array([1, 1, 1, 1.0]),
+            metallicFactor=0.2,
+            roughnessFactor=0.8
+        )
+
+        if texture_filename:
+            import cv2
+            texture =  cv2.cvtColor(cv2.imread(texture_filename), cv2.COLOR_BGR2RGB)
+            texture = Texture(source=texture, source_channels='RGB')
+            material = MetallicRoughnessMaterial(baseColorTexture=texture, wireframe=True)
+
         if self._debug:
-            self._add_to_scene(obj)
+            self._add_to_scene(obj, material)
 
         self._key_to_id[obj.key] = obj_id
         self._key_to_com[obj.key] = com
@@ -195,9 +207,9 @@ class PybulletPhysicsEngine(PhysicsEngine):
         self._scene.add_node(cn)
         self._scene.main_camera_node = cn
     
-    def _add_to_scene(self, obj):
+    def _add_to_scene(self, obj, material):
         self._viewer.render_lock.acquire()
-        n = Node(mesh=Mesh.from_trimesh(obj.mesh), matrix=obj.pose.matrix, name=obj.key)
+        n = Node(mesh=Mesh.from_trimesh(obj.mesh, material=material), matrix=obj.pose.matrix, name=obj.key)
         self._scene.add_node(n)
         self._viewer.render_lock.release()
 

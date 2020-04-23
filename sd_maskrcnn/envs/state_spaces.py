@@ -97,6 +97,7 @@ class HeapStateSpace(gym.Space):
         delta_com_sigma = max(1e-6, obj_config['center_of_mass']['sigma'])
         self.delta_com_rv = sstats.multivariate_normal(np.zeros(3), delta_com_sigma**2)
 
+        self.mesh_dir = obj_config['mesh_dir']
         self.obj_scale = obj_config['scale']
         self.obj_has_texture = obj_config['texture']
         self.obj_density = obj_config['density']
@@ -247,7 +248,11 @@ class HeapStateSpace(gym.Space):
         while total_drops < total_num_objs and len(objs_in_heap) < num_objs:
             obj_key = sample_keys[obj_inds[total_drops]]
             obj_mesh = trimesh.load_mesh(self.mesh_filenames[obj_key])
-            if not self.obj_has_texture:
+            texture_filename = None
+            if self.obj_has_texture:
+                key, item = obj_key.split('~')
+                texture_filename = self.mesh_dir + key + "/" + item.split('_')[0] + ".jpg"
+            else:
                 obj_mesh.visual = trimesh.visual.ColorVisuals(obj_mesh, vertex_colors=(0.7,0.7,0.7,1.0))
             
             if self.obj_scale == "millimeters":
@@ -287,7 +292,7 @@ class HeapStateSpace(gym.Space):
                                       from_frame='obj',
                                       to_frame='world')
 
-            self._physics_engine.add(obj)
+            self._physics_engine.add(obj, texture_filename=texture_filename)
             try:
                 v, w = self._physics_engine.get_velocity(obj.key)
             except:
