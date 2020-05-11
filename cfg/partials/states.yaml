@@ -16,8 +16,8 @@ state_space:
           pose_filename: data/lab_bin/bin_pose.tf
 
         plane:
-          mesh_filename: data/plane/plane.obj
-          pose_filename: data/plane/plane_pose.tf
+          mesh_filename: data/lab_plane/plane.obj
+          pose_filename: data/lab_plane/plane_pose.tf
 
     center:             # x,y coordinates for the center of the workspace (where the center dropping point can be)
       min:              # This is a uniform random variable from "min" to "max"
@@ -28,11 +28,11 @@ state_space:
         - 0.1
 
     mean_objs: 10        # Poisson dist mean for number of objects in each heap
-    min_objs: 2         # Min objs in each heap
-    max_objs: 15        # Max objs in each heap
+    min_objs: 5         # Min objs in each heap
+    max_objs: 20        # Max objs in each heap
     replace: 0          # Sample objects with replacement?
     max_obj_diam: 0.3   # Max diameter of object to be dropped (otherwise it will be skipped)
-    drop_height: 0.5
+    drop_height: 0.3
     
     # Dynamic sim parameters
     max_settle_steps: 500
@@ -43,10 +43,10 @@ state_space:
       mesh_dir: datasets/objects/meshes/    # Directory containing meshes to be dropped
       num_objects: 50                       # Number of objects in dataset (test and train)
       train_pct: 0.8                        # Percentage of objects to be designated as train
-      scale: millimeters                    # 'millimeters' or 'meters'
+      scale: meters                    # 'millimeters' or 'meters'
       texture: 1                            # 1: has texture, 0: no texture
       object_keys:                          # Folders containing meshes
-        lab_obj: all
+        choice: all
         # ycb: all                            # all -> all meshes in folder. Can also specify list of mesh names
 
       planar_translation:                   # Amount of translation around the center point to drop each object
@@ -66,44 +66,38 @@ state_space:
     name: camera
 
     # Image size
-    im_width: 512
-    im_height: 384
+    im_width: 2048
+    im_height: 1536
+    # im_width: 512
+    # im_height: 384
 
     focal_length:                           # Camera intrinsics: fx and fy
-      min: 535                              # Sampled uniformly over the given range
-      max: 560
+      min: 3700
+      max: 3725
+      #min: 535                              # Sampled uniformly over the given range
+      #max: 560
     delta_optical_center:                   # Camera intrinsics: cx and cy
       min: -2.5                             # Sampled uniformly over the given range
       max: 2.5
 
     x:                                      # Variation in x position and y position
       # min: -0.05                            # Sampled uniformly over the given range
-      min: -0.01
+      min: -0.1
       # max: 0.05
-      max: 0.01
+      max: 0.1
     y:
-      # min: -0.05
-      min: -0.01
-      # max: 0.05
-      max: 0.01
+      min: -0.02
+      max: 0.02
 
-    radius:                                 # Uniform random variable for camera distance (Distance from camera to world origin.)
-      # min: 0.7
-      min: 0.9
-      # max: 0.9
-      max: 1.1
-    elevation:                              # Uniform random variable for camera elevation (angle from z-axis of camera in degrees.)
-      # min: 0.01
-      min: -10
-      # max: 10
-      max: 10
-    azimuth:                                # Uniform random variable for camera azimuth (angle from x-axis of camera in degrees.)
-      # min: 0
-      min: -10
-      # max: 360
-      max: 10
+    radius:                                 # Uniform random variable for camera distance
+      min: 1.6
+      max: 1.8
+    elevation:                              # Uniform random variable for camera elevation 
+      min: -5.0
+      max: 5.0
+    azimuth:                                # Uniform random variable for camera azimuth 
+      min: -5.0
+      max: 5.0
     roll:                                   # Uniform random variable for camera roll
-      # min: -10
-      min: -5
-      # max: 10
-      max: 5
+      min: -5.0
+      max: 5.0
