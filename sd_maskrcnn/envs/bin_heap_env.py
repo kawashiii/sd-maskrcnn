@@ -21,6 +21,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 Author: Mike Danielczuk
 """
 
+import os
+import cv2
+import random
 import numpy as np
 import gym
 
@@ -138,6 +141,22 @@ class BinHeapEnv(gym.Env):
         for obj_key in self.state.workspace_keys:
             obj_state = self.state[obj_key]
             obj_mesh = Mesh.from_trimesh(obj_state.mesh, material=material)
+            if obj_key == "bin":
+                num = random.randrange(4)
+                texture_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "data/lab_bin/bin_" + str(num) + ".jpg")
+                texture = cv2.cvtColor(cv2.imread(texture_filename), cv2.COLOR_BGR2RGB)
+                texture = Texture(source=texture, source_channels='RGB')
+                mat = MetallicRoughnessMaterial(baseColorTexture=texture, wireframe=True)
+                obj_mesh = Mesh.from_trimesh(obj_state.mesh, material=mat)
+            elif obj_key == "plane":
+                num = random.randrange(12)
+                texture_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "data/lab_plane/background/" + str(num) + ".jpg")
+                texture = cv2.cvtColor(cv2.imread(texture_filename), cv2.COLOR_BGR2RGB)
+                texture = Texture(source=texture, source_channels='RGB')
+                mat = MetallicRoughnessMaterial(baseColorTexture=texture, wireframe=True)
+                obj_mesh = Mesh.from_trimesh(obj_state.mesh, material=mat)
+
+
             T_obj_world = obj_state.pose.matrix
             scene.add(obj_mesh, pose=T_obj_world, name=obj_key)
 
@@ -148,7 +167,6 @@ class BinHeapEnv(gym.Env):
             obj_state = self.state[obj_key]
             obj_mesh = Mesh.from_trimesh(obj_state.mesh, material=material)
             if has_texture:
-                import cv2
                 key, item = obj_key.split('~')
                 texture_filename = item.split('_')[0] + ".jpg"
                 texture =  cv2.cvtColor(cv2.imread(mesh_dir + key + '/' + texture_filename), cv2.COLOR_BGR2RGB)
