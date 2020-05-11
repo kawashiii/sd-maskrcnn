@@ -36,6 +36,7 @@ from autolab_core import TensorDataset, YamlConfig, Logger
 import autolab_core.utils as utils
 from perception import DepthImage, GrayscaleImage, BinaryImage, ColorImage
 
+import cv2
 import sys
 sys.path.append('./')
 from sd_maskrcnn.envs import BinHeapEnv
@@ -119,7 +120,7 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
     num_prev_states = 0
 
     # set dataset params
-    # default is False
+    # default is True
     if save_tensors:
 
         # read dataset subconfigs
@@ -294,6 +295,7 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
     
     # generate states and images
     state_id = num_prev_states
+    result = {}
     while state_id < num_states:
 
         # create env and set objects
@@ -444,10 +446,45 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
                         DepthImage(depth_obs).save(os.path.join(depth_dir, 'image_{:06d}.png'.format(num_images_per_state*state_id + k)))
                     if image_config['modal']:
                         modal_id_dir = os.path.join(modal_dir, 'image_{:06d}'.format(num_images_per_state*state_id + k))
+                        filename = 'image_{:06d}.png'.format(num_images_per_state*state_id + k)
+                        result[filename] = {"filename": filename, "file_attributes":{}, "size":0}
+
                         if not os.path.exists(modal_id_dir):
                             os.mkdir(modal_id_dir)
+
+                        regions = []
                         for i in range(env.num_objects):
+                            img_modal = modal_segmask_arr[:,:,i]
+                            modal_pixel_num = np.count_nonzero(img_modal>125)
+                            img_amodal = amodal_segmask_arr[:,:,i]
+                            amodal_pixel_num = np.count_nonzero(img_amodal>125)
+                            
+                            # plt.imshow(img_modal, cmap="gray")
+                            # plt.show()
                             BinaryImage(modal_segmask_arr[:,:,i]).save(os.path.join(modal_id_dir, 'channel_{:03d}.png'.format(i)))
+                            
+                            if modal_pixel_num > amodal_pixel_num * 0.7:
+                                attr = {}
+                                attr["region_attributes"] = {"name": "obj"}
+                                ret, thresh = cv2.threshold(img_modal, 127, 255, cv2.THRESH_BINARY)
+                                contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+                                if (len(contours) == 0) : continue
+        
+                                contours_index = 0
+                                for k in range(len(contours)):
+                                    if k != len(contours) - 1:
+                                        if len(contours[k]) < len(contours[k + 1]):
+                                            contours_index = k + 1
+        
+                                contours = contours[contours_index]
+                                all_points_x = [int(contours[k][0][0]) for k in range(len(contours))]
+                                all_points_y = [int(contours[k][0][1]) for k in range(len(contours))]
+                                attr["shape_attributes"] = {"name": "polyline", "all_points_x": all_points_x, "all_points_y": all_points_y}
+                                regions.append(attr)
+
+                        result[filename]["regions"] = regions
+
                     if image_config['amodal']:
                         amodal_id_dir = os.path.join(amodal_dir, 'image_{:06d}'.format(num_images_per_state*state_id + k))
                         if not os.path.exists(amodal_id_dir):
@@ -507,6 +544,8 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
         state_dataset.flush()
         image_dataset.flush()
 
+    with open(color_dir + "/label.json", "w") as f:
+        json.dump(result, f)
     logger.info('Generated %d image datapoints' %(state_id*num_images_per_state))
 
 if __name__ == '__main__':
