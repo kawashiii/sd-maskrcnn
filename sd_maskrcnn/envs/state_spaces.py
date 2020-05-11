@@ -208,12 +208,23 @@ class HeapStateSpace(gym.Space):
                                              '..',
                                              pose_filename)
             
+            texture_filename = None
+            if mesh_filename.endswith("bin.obj"):
+                dirname = os.path.dirname(mesh_filename)
+                if dirname + "/" + "bin.jpg":
+                    texture_filename = dirname + "/" + "bin.jpg"
+
+            if mesh_filename.endswith("plane.obj"):
+                dirname = os.path.dirname(mesh_filename)
+                if dirname + "/" + "plane.jpg":
+                    texture_filename = dirname + "/" + "plane.jpg"
+
             # load mesh
             mesh = trimesh.load_mesh(mesh_filename)
             mesh.density = self.obj_density
             pose = RigidTransform.load(pose_filename)
             workspace_obj = ObjectState(work_key, mesh, pose)
-            self._physics_engine.add(workspace_obj, static=True)
+            self._physics_engine.add(workspace_obj, static=True, texture_filename=texture_filename)
             workspace_obj_states.append(workspace_obj)
 
         # sample state
@@ -287,6 +298,10 @@ class HeapStateSpace(gym.Space):
                                         obj_planar_pose[1],
                                         self.drop_height])
             t_obj_drop_world = t_obj_drop_heap + t_heap_world
+            # t_obj_drop_world = np.array([0.1, -0.1, 0.01])
+            # R_obj_drop_world = np.eye(3)
+            # print("obj_tranlation", t_obj_drop_world)
+            # print("obj_rotation", R_obj_drop_world)
             obj.pose = RigidTransform(rotation=R_obj_drop_world,
                                       translation=t_obj_drop_world,
                                       from_frame='obj',
