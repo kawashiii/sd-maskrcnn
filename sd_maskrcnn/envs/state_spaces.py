@@ -23,6 +23,7 @@ Author: Mike Danielczuk
 
 import os
 import time
+import random
 import numpy as np
 import gym
 import scipy.stats as sstats
@@ -106,6 +107,9 @@ class HeapStateSpace(gym.Space):
         min_workspace_trans = np.array(workspace_config['min'])
         max_workspace_trans = np.array(workspace_config['max'])
         self.workspace_space = gym.spaces.Box(min_workspace_trans, max_workspace_trans, dtype=np.float32)
+
+        self.workspace_xlength = max_workspace_trans[0] * 2
+        self.workspace_ylength = max_workspace_trans[1] * 2
 
         # Setup object keys and directories
         object_keys = []
@@ -223,6 +227,7 @@ class HeapStateSpace(gym.Space):
             mesh = trimesh.load_mesh(mesh_filename)
             mesh.density = self.obj_density
             pose = RigidTransform.load(pose_filename)
+            if work_key == "bin": self.workspace_zlength = pose.translation[2]
             workspace_obj = ObjectState(work_key, mesh, pose)
             self._physics_engine.add(workspace_obj, static=True, texture_filename=texture_filename)
             workspace_obj_states.append(workspace_obj)
@@ -256,6 +261,13 @@ class HeapStateSpace(gym.Space):
         # sample object, center of mass, pose
         objs_in_heap = []
         total_drops = 0
+        row = 0
+        col = 0
+        gap = 0.001 * (random.randrange(3) + 1)
+        axis = [0, 0, 0]
+        axis[random.randrange(3)] = 1
+        rotate = trimesh.transformations.rotation_matrix(np.radians(90.0 * random.randrange(3)),axis)
+        lineup_axis = random.randrange(2)
         while total_drops < total_num_objs and len(objs_in_heap) < num_objs:
             obj_key = sample_keys[obj_inds[total_drops]]
             obj_mesh = trimesh.load_mesh(self.mesh_filenames[obj_key])
@@ -298,10 +310,6 @@ class HeapStateSpace(gym.Space):
                                         obj_planar_pose[1],
                                         self.drop_height])
             t_obj_drop_world = t_obj_drop_heap + t_heap_world
-            # t_obj_drop_world = np.array([0.1, -0.1, 0.01])
-            # R_obj_drop_world = np.eye(3)
-            # print("obj_tranlation", t_obj_drop_world)
-            # print("obj_rotation", R_obj_drop_world)
             obj.pose = RigidTransform(rotation=R_obj_drop_world,
                                       translation=t_obj_drop_world,
                                       from_frame='obj',
@@ -315,6 +323,74 @@ class HeapStateSpace(gym.Space):
                 self._physics_engine.remove(obj.key)
                 total_drops += 1
                 continue
+
+            obj.mesh.apply_transform(rotate)
+            if random.randrange(3) == 0:
+                rotate_pi = trimesh.transformations.rotation_matrix(np.radians(180),[1,0,0])
+                obj.mesh.apply_transform(rotate_pi)
+            if random.randrange(3) == 0:
+                rotate_pi = trimesh.transformations.rotation_matrix(np.radians(180),[0,0,1])
+                obj.mesh.apply_transform(rotate_pi)
+
+            bbox = obj.mesh.bounds
+            obj_xlength, obj_ylength, obj_zlength = 2 * abs(bbox[0])
+            
+            initial_position = np.array([-self.workspace_xlength/2 + obj_xlength/2,
+                                         -self.workspace_ylength/2 + obj_ylength/2,
+                                         self.workspace_zlength + obj_zlength])
+            initial_pose = np.eye(3)
+
+            lineup_position = initial_position.copy()
+            if lineup_axis == 0:
+                lineup_position[0] += obj_xlength * col + gap * col
+                lineup_position[1] += obj_ylength * row + gap * row
+            elif lineup_axis == 1:
+                lineup_position[0] += obj_xlength * row + gap * row
+                lineup_position[1] += obj_ylength * col + gap * col
+
+            obj.pose = RigidTransform(rotation=initial_pose,
+                                      translation=lineup_position,
+                                      from_frame='obj',
+                                      to_frame='world')
+
+            collision_position = lineup_position.copy()
+            collision_position[0] += obj_xlength/2
+            collision_position[1] += obj_ylength/2
+            collision_pose = RigidTransform(rotation=initial_pose,
+                                            translation=collision_position,
+                                            from_frame='obj',
+                                            to_frame='world')
+            col += 1
+            if not self.in_workspace(collision_pose):
+                row += 1
+                next_row_position = initial_position.copy()
+
+                if lineup_axis == 0:
+                    next_row_position[1] += obj_ylength * row + gap * row
+                elif lineup_axis == 1:
+                    next_row_position[0] += obj_xlength * row + gap * row
+
+                obj.pose = RigidTransform(rotation=initial_pose,
+                                          translation=next_row_position,
+                                          from_frame='obj',
+                                          to_frame='world')
+
+                collision_position = next_row_position.copy()
+                collision_position[0] += obj_xlength/2
+                collision_position[1] += obj_ylength/2
+                collision_pose = RigidTransform(rotation=initial_pose,
+                                                translation=collision_position,
+                                                from_frame='obj',
+                                                to_frame='world')
+
+                if not self.in_workspace(collision_pose):
+                    self._physics_engine.remove(obj.key)
+                    total_drops += 1
+                    row -= 1
+                    continue
+
+                col = 0
+
             
             objs_in_heap.append(obj)
         
@@ -359,8 +435,9 @@ class HeapStateSpace(gym.Space):
             # read out object poses
             objs_to_remove = set()
             for o in objs_in_heap:
-                obj_pose = self._physics_engine.get_pose(o.key)
-                o.pose = obj_pose.copy()
+                obj_pose = o.pose.copy()
+                # obj_pose = self._physics_engine.get_pose(o.key)
+                # o.pose = obj_pose.copy()
 
                 # remove the object if its outside of the workspace
                 if not self.in_workspace(obj_pose):

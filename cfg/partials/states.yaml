@@ -3,11 +3,11 @@ state_space:
     workspace:          # Workspace boundaries define what region the objects can be dropped in
       min:              # x,y,z
         - -0.2
-        - -0.25
+        - -0.295
         - 0.0
       max:              # x,y,z
         - 0.2
-        - 0.25
+        - 0.295
         - 0.4
 
       objects:          # static workspace objects
@@ -29,7 +29,7 @@ state_space:
 
     mean_objs: 10        # Poisson dist mean for number of objects in each heap
     min_objs: 5         # Min objs in each heap
-    max_objs: 20        # Max objs in each heap
+    max_objs: 15        # Max objs in each heap
     replace: 0          # Sample objects with replacement?
     max_obj_diam: 0.3   # Max diameter of object to be dropped (otherwise it will be skipped)
     drop_height: 0.3
@@ -81,10 +81,8 @@ state_space:
       max: 2.5
 
     x:                                      # Variation in x position and y position
-      # min: -0.05                            # Sampled uniformly over the given range
-      min: -0.1
-      # max: 0.05
-      max: 0.1
+      min: -0.02
+      max: 0.02
     y:
       min: -0.02
       max: 0.02
