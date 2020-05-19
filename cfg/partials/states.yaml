@@ -91,11 +91,11 @@ state_space:
       min: 1.6
       max: 1.8
     elevation:                              # Uniform random variable for camera elevation 
-      min: -5.0
-      max: 5.0
+      min: -2.0
+      max: 2.0
     azimuth:                                # Uniform random variable for camera azimuth 
-      min: -5.0
-      max: 5.0
+      min: -2.0
+      max: 2.0
     roll:                                   # Uniform random variable for camera roll
-      min: -5.0
-      max: 5.0
+      min: -2.0
+      max: 2.0

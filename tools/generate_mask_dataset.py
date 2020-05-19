@@ -463,7 +463,7 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
                             # plt.show()
                             BinaryImage(modal_segmask_arr[:,:,i]).save(os.path.join(modal_id_dir, 'channel_{:03d}.png'.format(i)))
                             
-                            if modal_pixel_num > amodal_pixel_num * 0.7:
+                            if modal_pixel_num > amodal_pixel_num * 0.6:
                                 attr = {}
                                 attr["region_attributes"] = {"name": "obj"}
                                 ret, thresh = cv2.threshold(img_modal, 127, 255, cv2.THRESH_BINARY)
@@ -472,14 +472,14 @@ def generate_segmask_dataset(output_dataset_path, config, save_tensors=True, war
                                 if (len(contours) == 0) : continue
         
                                 contours_index = 0
-                                for k in range(len(contours)):
-                                    if k != len(contours) - 1:
-                                        if len(contours[k]) < len(contours[k + 1]):
+                                for c in range(len(contours)):
+                                    if c != len(contours) - 1:
+                                        if len(contours[c]) < len(contours[c + 1]):
                                             contours_index = k + 1
         
                                 contours = contours[contours_index]
-                                all_points_x = [int(contours[k][0][0]) for k in range(len(contours))]
-                                all_points_y = [int(contours[k][0][1]) for k in range(len(contours))]
+                                all_points_x = [int(contours[x][0][0]) for x in range(len(contours))]
+                                all_points_y = [int(contours[y][0][1]) for y in range(len(contours))]
                                 attr["shape_attributes"] = {"name": "polyline", "all_points_x": all_points_x, "all_points_y": all_points_y}
                                 regions.append(attr)
 

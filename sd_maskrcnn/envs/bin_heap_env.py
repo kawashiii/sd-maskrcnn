@@ -26,6 +26,8 @@ import cv2
 import random
 import numpy as np
 import gym
+import imgaug.augmenters as iaa
+
 
 from autolab_core import Logger
 from pyrender import (Scene, IntrinsicsCamera, Mesh, DirectionalLight, Viewer, Texture,
@@ -137,6 +139,19 @@ class BinHeapEnv(gym.Env):
             roughnessFactor=0.8
         )
 
+        # Randomize hue and saturation of plane
+        plane_augment_param = iaa.WithHueAndSaturation([
+                                iaa.WithChannels(0, iaa.Add((-180, 180))),
+                                iaa.WithChannels(1, [
+                                    iaa.Multiply((0.5, 1.5)),
+                                    iaa.LinearContrast((0.75, 1.25))
+                                ])
+                              ])
+
+        # Randomize saturation of obj
+        saturation_param = random.randrange(7, 11) / 10
+        obj_augment_param = iaa.MultiplySaturation(saturation_param)
+
         # add workspace objects
         for obj_key in self.state.workspace_keys:
             obj_state = self.state[obj_key]
@@ -152,13 +167,14 @@ class BinHeapEnv(gym.Env):
                 num = random.randrange(12)
                 texture_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "data/lab_plane/background/" + str(num) + ".jpg")
                 texture = cv2.cvtColor(cv2.imread(texture_filename), cv2.COLOR_BGR2RGB)
+                texture = plane_augment_param.augment_image(texture)
                 texture = Texture(source=texture, source_channels='RGB')
                 mat = MetallicRoughnessMaterial(baseColorTexture=texture, wireframe=True)
                 obj_mesh = Mesh.from_trimesh(obj_state.mesh, material=mat)
 
 
             T_obj_world = obj_state.pose.matrix
-            scene.add(obj_mesh, pose=T_obj_world, name=obj_key)
+            if obj_key == "plane": scene.add(obj_mesh, pose=T_obj_world, name=obj_key)
 
         mesh_dir = self.config['state_space']['heap']['objects']['mesh_dir']
         has_texture = self.config['state_space']['heap']['objects']['texture']
@@ -170,6 +186,7 @@ class BinHeapEnv(gym.Env):
                 key, item = obj_key.split('~')
                 texture_filename = item.split('_')[0] + ".jpg"
                 texture =  cv2.cvtColor(cv2.imread(mesh_dir + key + '/' + texture_filename), cv2.COLOR_BGR2RGB)
+                texture = obj_augment_param.augment_image(texture)
                 texture = Texture(source=texture, source_channels='RGB')
                 material = MetallicRoughnessMaterial(baseColorTexture=texture, wireframe=True)
                 obj_mesh = Mesh.from_trimesh(obj_state.mesh, material=material)
